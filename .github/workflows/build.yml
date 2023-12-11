@@ -57,7 +57,7 @@ jobs:
 
   build-src-with-gpu:
     needs: check-src
-    name: build-src-${{ matrix.os }}
+    name: build-src-${{ matrix.os }}-with-gpu
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

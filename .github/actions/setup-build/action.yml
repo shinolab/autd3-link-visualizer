@@ -10,7 +10,12 @@ inputs:
     default: false
 runs:
   using: "composite"
-  steps:
+  steps:  
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+
     - name: install shaderc
       shell: pwsh
       if: inputs.shaderc && inputs.os == 'windows-latest'
