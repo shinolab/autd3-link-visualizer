@@ -1,0 +1,47 @@
+name: 'build tools setup action'
+inputs:
+  os:
+    description: 'os'
+    required: true
+    default: ''
+  shaderc:
+    description: 'use shaderc'
+    required: false
+    default: false
+runs:
+  using: "composite"
+  steps:
+    - name: install shaderc
+      shell: pwsh
+      if: input.shaderc && inputs.os == 'windows-latest'
+      run: |
+        Invoke-WebRequest -URI https://storage.googleapis.com/shaderc/artifacts/prod/graphics_shader_compiler/shaderc/windows/continuous_release_2019/10/20230531-104731/install.zip -OutFile shaderc.zip
+        Expand-Archive -Path shaderc.zip -DestinationPath shaderc
+        echo "SHADERC_LIB_DIR=$Env:GITHUB_WORKSPACE/shaderc/install/lib" >> $Env:GITHUB_ENV
+        rm shaderc.zip
+    - name: install shaderc
+      shell: bash
+      if: input.shaderc && inputs.os == 'ubuntu-latest'
+      run: |
+        curl -L https://storage.googleapis.com/shaderc/artifacts/prod/graphics_shader_compiler/shaderc/linux/continuous_clang_release/418/20230531-104531/install.tgz > shaderc.tgz
+        tar -xzf shaderc.tgz
+        echo "SHADERC_LIB_DIR=$GITHUB_WORKSPACE/install/lib" >> $GITHUB_ENV
+        echo "LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib" >> $GITHUB_ENV
+        rm shaderc.tgz
+    - name: install shaderc
+      shell: bash
+      if: input.shaderc && inputs.os == 'macos-latest'
+      run: |
+        curl -L https://storage.googleapis.com/shaderc/artifacts/prod/graphics_shader_compiler/shaderc/macos/continuous_clang_release/426/20230531-104534/install.tgz > shaderc.tgz
+        tar -xzf shaderc.tgz
+        echo "SHADERC_LIB_DIR=$GITHUB_WORKSPACE/install/lib" >> $GITHUB_ENV
+        echo "DYLD_LIBRARY_PATH=$GITHUB_WORKSPACE/install/lib" >> $GITHUB_ENV
+        cp install/lib/*.dylib /usr/local/lib/
+        rm shaderc.tgz
+
+    - name: install dependencies
+      shell: bash
+      if: inputs.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pkg-config libfreetype6-dev libfontconfig1-dev
