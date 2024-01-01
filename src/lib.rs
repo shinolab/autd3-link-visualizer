@@ -170,7 +170,7 @@ impl PlotRange {
         Self::observe(self.nz(), self.z_range.start, self.resolution)
     }
 
-    fn observe_points(&self) -> Vec<Vector3> {
+    pub fn observe_points(&self) -> Vec<Vector3> {
         match (self.nx(), self.ny(), self.nz()) {
             (_, 1, 1) => self
                 .observe_x()
