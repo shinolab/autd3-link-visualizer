@@ -4,7 +4,7 @@
  * Created Date: 11/12/2023
  * Author: Shun Suzuki
  * -----
- * Last Modified: 11/12/2023
+ * Last Modified: 01/01/2024
  * Modified By: Shun Suzuki (suzuki@hapis.k.u-tokyo.ac.jp)
  * -----
  * Copyright (c) 2023 Shun Suzuki. All rights reserved.
@@ -111,7 +111,7 @@ async fn main() -> Result<()> {
     // Calculate acoustic pressure without plotting
     let p = autd.link.calc_field(&[center], &autd.geometry)?;
     println!(
-        "Acoustic pressure at ({}, {}, {}) = {}",
+        "Acoustic pressure at ({}, {}, {}) = {} [Pa]",
         center.x, center.y, center.z, p[0]
     );
 
