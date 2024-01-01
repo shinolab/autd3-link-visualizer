@@ -4,7 +4,7 @@
  * Created Date: 14/06/2023
  * Author: Shun Suzuki
  * -----
- * Last Modified: 11/12/2023
+ * Last Modified: 01/01/2024
  * Modified By: Shun Suzuki (suzuki@hapis.k.u-tokyo.ac.jp)
  * -----
  * Copyright (c) 2023 Shun Suzuki. All rights reserved.
@@ -32,7 +32,7 @@ use autd3_driver::{
         propagate,
     },
     cpu::{RxMessage, TxDatagram},
-    defined::{float, Complex, PI},
+    defined::{float, Complex, PI, T4010A1_AMPLITUDE},
     error::AUTDInternalError,
     geometry::{Geometry, Vector3},
     link::{LinkSync, LinkSyncBuilder},
@@ -412,6 +412,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             },
                         )
                     })
+                    * T4010A1_AMPLITUDE
             })
             .collect())
     }

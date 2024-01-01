@@ -4,7 +4,7 @@
  * Created Date: 15/06/2023
  * Author: Shun Suzuki
  * -----
- * Last Modified: 15/06/2023
+ * Last Modified: 01/01/2024
  * Modified By: Shun Suzuki (suzuki@hapis.k.u-tokyo.ac.jp)
  * -----
  * Copyright (c) 2023 Shun Suzuki. All rights reserved.
@@ -18,7 +18,7 @@ layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(push_constant) uniform PushConsts {
     uint source_num;
     uint observe_num;
-    uint _dummy1;
+    float trans_amp;
     uint _dummy2;
 } pc;
 
@@ -74,7 +74,7 @@ void main() {
         float dst = length(diff);
         float angle = atan(length(cross(dir, diff)), dot(dir, diff)) * 180.0 / PI;
 
-        float amp = directivity(angle) * source_drive.drive[idx].x / r;
+        float amp = pc.trans_amp * directivity(angle) * source_drive.drive[idx].x / r;
         re += amp * cos(p);
         im += amp * sin(p);
     } 
