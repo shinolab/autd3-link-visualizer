@@ -39,7 +39,8 @@ jobs:
         with:
           os: ubuntu-latest
           shaderc: false
-      - uses: dtolnay/rust-toolchain@nightly
+          toolchain: nightly
+
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
 
