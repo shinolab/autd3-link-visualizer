@@ -150,7 +150,7 @@ impl FieldCompute {
         source_drive: Vec<[f32; 4]>,
     ) -> Result<Vec<Complex>, VisualizerError> {
         let pipeline_layout = self.pipeline.layout();
-        let layout = pipeline_layout.set_layouts().get(0).unwrap();
+        let layout = pipeline_layout.set_layouts().first().unwrap();
 
         let observe_points = observe_points.into_iter().collect::<Vec<_>>();
         let size = observe_points.len();
