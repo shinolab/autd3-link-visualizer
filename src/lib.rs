@@ -4,7 +4,7 @@
  * Created Date: 14/06/2023
  * Author: Shun Suzuki
  * -----
- * Last Modified: 09/01/2024
+ * Last Modified: 10/01/2024
  * Modified By: Shun Suzuki (suzuki@hapis.k.u-tokyo.ac.jp)
  * -----
  * Copyright (c) 2023 Shun Suzuki. All rights reserved.
@@ -125,15 +125,15 @@ impl PlotRange {
         ((range.end - range.start) / resolution).floor() as usize + 1
     }
 
-    fn nx(&self) -> usize {
+    pub fn nx(&self) -> usize {
         Self::n(&self.x_range, self.resolution)
     }
 
-    fn ny(&self) -> usize {
+    pub fn ny(&self) -> usize {
         Self::n(&self.y_range, self.resolution)
     }
 
-    fn nz(&self) -> usize {
+    pub fn nz(&self) -> usize {
         Self::n(&self.z_range, self.resolution)
     }
 
