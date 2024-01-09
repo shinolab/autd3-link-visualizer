@@ -4,7 +4,7 @@
  * Created Date: 15/06/2023
  * Author: Shun Suzuki
  * -----
- * Last Modified: 01/01/2024
+ * Last Modified: 09/01/2024
  * Modified By: Shun Suzuki (suzuki@hapis.k.u-tokyo.ac.jp)
  * -----
  * Copyright (c) 2023 Shun Suzuki. All rights reserved.
@@ -14,7 +14,7 @@
 use std::sync::Arc;
 
 use autd3_driver::{
-    defined::{float, Complex, T4010A1_AMPLITUDE},
+    defined::{float, Complex, PI, T4010A1_AMPLITUDE},
     geometry::{Geometry, Vector3},
 };
 use vulkano::{
@@ -310,7 +310,7 @@ impl FieldCompute {
         let pc = cs::PushConsts {
             observe_num: size as u32,
             source_num: geometry.num_transducers() as u32,
-            trans_amp: T4010A1_AMPLITUDE as f32,
+            trans_amp: (T4010A1_AMPLITUDE / (4. * PI)) as f32,
             _dummy2: 0,
         };
 
