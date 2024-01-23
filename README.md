@@ -24,4 +24,4 @@ You must install Python, and numpy/matplotlib package.
 
 # Author
 
-Shun Suzuki, 2022-2023
+Shun Suzuki, 2022-2024

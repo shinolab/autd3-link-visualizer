@@ -1,16 +1,3 @@
-/*
- * File: plotters.rs
- * Project: backend
- * Created Date: 16/07/2023
- * Author: Shun Suzuki
- * -----
- * Last Modified: 06/11/2023
- * Modified By: Shun Suzuki (suzuki@hapis.k.u-tokyo.ac.jp)
- * -----
- * Copyright (c) 2023 Shun Suzuki. All rights reserved.
- *
- */
-
 use std::ffi::OsString;
 
 use plotters::{coord::Shift, prelude::*};
