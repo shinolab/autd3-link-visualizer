@@ -34,6 +34,19 @@ impl Default for PlotConfig {
     }
 }
 
+impl PartialEq for PlotConfig {
+    fn eq(&self, other: &Self) -> bool {
+        self.figsize == other.figsize
+            && self.cbar_size == other.cbar_size
+            && self.font_size == other.font_size
+            && self.label_area_size == other.label_area_size
+            && self.margin == other.margin
+            && self.ticks_step == other.ticks_step
+            && self.cmap.vals == other.cmap.vals
+            && self.fname == other.fname
+    }
+}
+
 /// Backend using [plotters](https://github.com/plotters-rs/plotters)
 pub struct PlottersBackend {}
 

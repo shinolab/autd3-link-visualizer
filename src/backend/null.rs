@@ -5,6 +5,7 @@ use autd3_driver::defined::float;
 /// Backend with no plotting
 pub struct NullBackend {}
 
+#[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
 pub struct NullPlotConfig {}
 
 impl Backend for NullBackend {

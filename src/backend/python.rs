@@ -10,7 +10,7 @@ use autd3_driver::{
 };
 
 #[pyclass]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PyPlotConfig {
     #[pyo3(get)]
     pub figsize: (i32, i32),
