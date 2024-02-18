@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
 
     let mut autd = Controller::builder()
         .add_device(AUTD3::new(Vector3::zeros()))
-        .open_with(link)
+        .open(link)
         .await?;
 
     let center = autd.geometry.center() + Vector3::new(0., 0., 150.0 * MILLIMETER);
@@ -35,6 +35,8 @@ async fn main() -> Result<()> {
             ..Config::default()
         },
         &autd.geometry,
+        Segment::S0,
+        0,
     )?;
     autd.link.plot_field(
         Config {
@@ -48,6 +50,8 @@ async fn main() -> Result<()> {
             resolution: 1.,
         },
         &autd.geometry,
+        Segment::S0,
+        0,
     )?;
     autd.link.plot_field(
         Config {
@@ -61,6 +65,8 @@ async fn main() -> Result<()> {
             resolution: 1.,
         },
         &autd.geometry,
+        Segment::S0,
+        0,
     )?;
     autd.link.plot_field(
         Config {
@@ -74,6 +80,8 @@ async fn main() -> Result<()> {
             resolution: 2.,
         },
         &autd.geometry,
+        Segment::S0,
+        0,
     )?;
     autd.link.plot_field(
         Config {
@@ -88,15 +96,22 @@ async fn main() -> Result<()> {
             resolution: 2.,
         },
         &autd.geometry,
+        Segment::S0,
+        0,
     )?;
 
-    autd.link.plot_modulation(Config {
-        fname: Path::new("mod.png").into(),
-        ..Config::default()
-    })?;
+    autd.link.plot_modulation(
+        Config {
+            fname: Path::new("mod.png").into(),
+            ..Config::default()
+        },
+        Segment::S0,
+    )?;
 
     // Calculate acoustic pressure without plotting
-    let p = autd.link.calc_field(&[center], &autd.geometry)?;
+    let p = autd
+        .link
+        .calc_field(&[center], &autd.geometry, Segment::S0, 0)?;
     println!(
         "Acoustic pressure at ({}, {}, {}) = {} [Pa]",
         center.x, center.y, center.z, p[0]

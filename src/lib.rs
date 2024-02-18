@@ -17,8 +17,9 @@ use autd3_driver::{
         directivity::{Directivity, Sphere},
         propagate,
     },
+    common::{EmitIntensity, Phase, Segment},
     cpu::{RxMessage, TxDatagram},
-    defined::{float, Complex, PI},
+    defined::{float, Complex},
     error::AUTDInternalError,
     geometry::{Geometry, Vector3},
     link::{Link, LinkBuilder},
@@ -278,14 +279,14 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     ///
     /// * `idx` - Index of STM. If you use Gain, this value should be 0.
     ///
-    pub fn phases_of(&self, idx: usize) -> Vec<u8> {
+    pub fn phases(&self, segment: Segment, idx: usize) -> Vec<Phase> {
         self.cpus
             .iter()
             .flat_map(|cpu| {
                 cpu.fpga()
-                    .intensities_and_phases(idx)
+                    .drives(segment, idx)
                     .iter()
-                    .map(|&d| d.1)
+                    .map(|&d| d.phase())
                     .collect::<Vec<_>>()
             })
             .collect()
@@ -297,47 +298,26 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     ///
     /// * `idx` - Index of STM. If you use Gain, this value should be 0.
     ///
-    pub fn intensities_of(&self, idx: usize) -> Vec<u8> {
+    pub fn intensities(&self, segment: Segment, idx: usize) -> Vec<EmitIntensity> {
         self.cpus
             .iter()
             .flat_map(|cpu| {
                 cpu.fpga()
-                    .intensities_and_phases(idx)
+                    .drives(segment, idx)
                     .iter()
-                    .map(|&d| d.0)
+                    .map(|&d| d.intensity())
                     .collect::<Vec<_>>()
             })
             .collect()
     }
 
-    /// Get phases of transducers
-    pub fn phases(&self) -> Vec<u8> {
-        self.phases_of(0)
-    }
-
-    /// Get intensity of transducers
-    pub fn intensities(&self) -> Vec<u8> {
-        self.intensities_of(0)
-    }
-
     /// Get raw modulation data
-    pub fn modulation(&self) -> Vec<u8> {
-        self.cpus[0].fpga().modulation().into_iter().collect()
-    }
-
-    /// Calculate acoustic field at specified points
-    ///
-    /// # Arguments
-    ///
-    /// * `observe_points` - Observe points iterator
-    /// * `geometry` - Geometry
-    ///
-    pub fn calc_field<'a, I: IntoIterator<Item = &'a Vector3>>(
-        &self,
-        observe_points: I,
-        geometry: &Geometry,
-    ) -> Result<Vec<Complex>, VisualizerError> {
-        self.calc_field_of::<I>(observe_points, geometry, 0)
+    pub fn modulation(&self, segment: Segment) -> Vec<EmitIntensity> {
+        self.cpus[0]
+            .fpga()
+            .modulation(segment)
+            .into_iter()
+            .collect()
     }
 
     /// Calculate acoustic field at specified points
@@ -348,10 +328,11 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     /// * `geometry` - Geometry
     /// * `idx` - Index of STM. If you use Gain, this value should be 0.
     ///
-    pub fn calc_field_of<'a, I: IntoIterator<Item = &'a Vector3>>(
+    pub fn calc_field<'a, I: IntoIterator<Item = &'a Vector3>>(
         &self,
         observe_points: I,
         geometry: &Geometry,
+        segment: Segment,
         idx: usize,
     ) -> Result<Vec<Complex>, VisualizerError> {
         #[cfg(feature = "gpu")]
@@ -365,12 +346,12 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                         let dev = &geometry[i];
                         let sound_speed = dev.sound_speed;
                         cpu.fpga()
-                            .intensities_and_phases(idx)
+                            .drives(segment, idx)
                             .iter()
                             .zip(dev.iter().map(|t| t.wavenumber(sound_speed)))
                             .map(|(d, w)| {
-                                let amp = d.0 as f32 / 255.0;
-                                let phase = 2. * std::f32::consts::PI * d.1 as f32 / 256.0;
+                                let amp = d.intensity().value() as float / 255.0;
+                                let phase = d.phase().radian();
                                 [amp, phase, 0., w as f32]
                             })
                             .collect::<Vec<_>>()
@@ -387,12 +368,12 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .enumerate()
                     .fold(Complex::new(0., 0.), |acc, (i, cpu)| {
                         let sound_speed = geometry[i].sound_speed;
-                        let drives = cpu.fpga().intensities_and_phases(idx);
+                        let drives = cpu.fpga().drives(segment, idx);
                         acc + geometry[i].iter().zip(drives.iter()).fold(
                             Complex::new(0., 0.),
                             |acc, (t, d)| {
-                                let amp = d.0 as float / 255.0;
-                                let phase = 2. * PI * d.1 as float / 256.0;
+                                let amp = d.intensity().value() as float / 255.0;
+                                let phase = d.phase().radian();
                                 acc + propagate::<D>(t, 0.0, sound_speed, target)
                                     * Complex::from_polar(amp, phase)
                             },
@@ -406,37 +387,21 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     ///
     /// # Arguments
     ///
-    /// * `range` - Plot range
     /// * `config` - Plot configuration
+    /// * `range` - Plot range
     /// * `geometry` - Geometry
+    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
     ///
     pub fn plot_field(
         &self,
         config: B::PlotConfig,
         range: PlotRange,
         geometry: &Geometry,
-    ) -> Result<(), VisualizerError> {
-        self.plot_field_of(config, range, geometry, 0)
-    }
-
-    /// Plot acoustic field
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - Plot configuration
-    /// * `range` - Plot range
-    /// * `geometry` - Geometry
-    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
-    ///
-    pub fn plot_field_of(
-        &self,
-        config: B::PlotConfig,
-        range: PlotRange,
-        geometry: &Geometry,
+        segment: Segment,
         idx: usize,
     ) -> Result<(), VisualizerError> {
         let observe_points = range.observe_points();
-        let acoustic_pressures = self.calc_field_of(&observe_points, geometry, idx)?;
+        let acoustic_pressures = self.calc_field(&observe_points, geometry, segment, idx)?;
         if range.is_1d() {
             let (observe, label) = match (range.nx(), range.ny(), range.nz()) {
                 (_, 1, 1) => (range.observe_x(), "x [mm]"),
@@ -478,43 +443,33 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     ///
     /// * `config` - Plot configuration
     /// * `geometry` - Geometry
+    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
     ///
     pub fn plot_phase(
         &self,
         config: B::PlotConfig,
         geometry: &Geometry,
-    ) -> Result<(), VisualizerError> {
-        self.plot_phase_of(config, geometry, 0)
-    }
-
-    /// Plot transducers with phases
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - Plot configuration
-    /// * `geometry` - Geometry
-    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
-    ///
-    pub fn plot_phase_of(
-        &self,
-        config: B::PlotConfig,
-        geometry: &Geometry,
+        segment: Segment,
         idx: usize,
     ) -> Result<(), VisualizerError> {
         let phases = self
-            .phases_of(idx)
-            .into_iter()
-            .map(|v| 2. * PI * v as float / 256.0)
+            .phases(segment, idx)
+            .iter()
+            .map(Phase::radian)
             .collect();
         B::plot_phase(config, geometry, phases)
     }
 
     /// Plot modulation data
-    pub fn plot_modulation(&self, config: B::PlotConfig) -> Result<(), VisualizerError> {
+    pub fn plot_modulation(
+        &self,
+        config: B::PlotConfig,
+        segment: Segment,
+    ) -> Result<(), VisualizerError> {
         let m = self
-            .modulation()
-            .into_iter()
-            .map(|v| v as float / 255.0)
+            .modulation(segment)
+            .iter()
+            .map(|v| v.value() as float / 255.0)
             .collect::<Vec<_>>();
         B::plot_modulation(m, config)?;
         Ok(())
@@ -550,8 +505,8 @@ impl<D: Directivity, B: Backend> Link for Visualizer<D, B> {
         }
 
         self.cpus.iter_mut().for_each(|cpu| {
-            rx[cpu.idx()].ack = cpu.ack();
-            rx[cpu.idx()].data = cpu.rx_data();
+            cpu.update();
+            rx[cpu.idx()] = RxMessage::new(cpu.ack(), cpu.rx_data());
         });
 
         Ok(true)
