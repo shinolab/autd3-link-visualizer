@@ -350,8 +350,8 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             .iter()
                             .zip(dev.iter().map(|t| t.wavenumber(sound_speed)))
                             .map(|(d, w)| {
-                                let amp = d.intensity().value() as float / 255.0;
-                                let phase = d.phase().radian();
+                                let amp = d.intensity().value() as f32 / 255.0;
+                                let phase = d.phase().radian() as f32;
                                 [amp, phase, 0., w as f32]
                             })
                             .collect::<Vec<_>>()
