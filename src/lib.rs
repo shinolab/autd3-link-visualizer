@@ -19,7 +19,7 @@ use autd3_driver::{
     },
     common::{EmitIntensity, Phase, Segment},
     cpu::{RxMessage, TxDatagram},
-    defined::{float, Complex},
+    defined::Complex,
     error::AUTDInternalError,
     geometry::{Geometry, Vector3},
     link::{Link, LinkBuilder},
@@ -101,14 +101,14 @@ impl<D: Directivity, B: Backend> LinkBuilder for VisualizerBuilder<D, B> {
 
 #[derive(Clone, Debug)]
 pub struct PlotRange {
-    pub x_range: std::ops::Range<float>,
-    pub y_range: std::ops::Range<float>,
-    pub z_range: std::ops::Range<float>,
-    pub resolution: float,
+    pub x_range: std::ops::Range<f64>,
+    pub y_range: std::ops::Range<f64>,
+    pub z_range: std::ops::Range<f64>,
+    pub resolution: f64,
 }
 
 impl PlotRange {
-    fn n(range: &std::ops::Range<float>, resolution: float) -> usize {
+    fn n(range: &std::ops::Range<f64>, resolution: f64) -> usize {
         ((range.end - range.start) / resolution).floor() as usize + 1
     }
 
@@ -141,19 +141,19 @@ impl PlotRange {
         )
     }
 
-    fn observe(n: usize, start: float, resolution: float) -> Vec<float> {
-        (0..n).map(|i| start + resolution * i as float).collect()
+    fn observe(n: usize, start: f64, resolution: f64) -> Vec<f64> {
+        (0..n).map(|i| start + resolution * i as f64).collect()
     }
 
-    fn observe_x(&self) -> Vec<float> {
+    fn observe_x(&self) -> Vec<f64> {
         Self::observe(self.nx(), self.x_range.start, self.resolution)
     }
 
-    fn observe_y(&self) -> Vec<float> {
+    fn observe_y(&self) -> Vec<f64> {
         Self::observe(self.ny(), self.y_range.start, self.resolution)
     }
 
-    fn observe_z(&self) -> Vec<float> {
+    fn observe_z(&self) -> Vec<f64> {
         Self::observe(self.nz(), self.z_range.start, self.resolution)
     }
 
@@ -372,7 +372,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                         acc + geometry[i].iter().zip(drives.iter()).fold(
                             Complex::new(0., 0.),
                             |acc, (t, d)| {
-                                let amp = d.intensity().value() as float / 255.0;
+                                let amp = d.intensity().value() as f64 / 255.0;
                                 let phase = d.phase().radian();
                                 acc + propagate::<D>(t, 0.0, sound_speed, target)
                                     * Complex::from_polar(amp, phase)
@@ -469,7 +469,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
         let m = self
             .modulation(segment)
             .iter()
-            .map(|v| v.value() as float / 255.0)
+            .map(|v| v.value() as f64 / 255.0)
             .collect::<Vec<_>>();
         B::plot_modulation(m, config)?;
         Ok(())

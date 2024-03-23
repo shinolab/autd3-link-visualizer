@@ -6,10 +6,7 @@ mod python;
 
 use crate::error::VisualizerError;
 
-use autd3_driver::{
-    defined::{float, Complex},
-    geometry::Geometry,
-};
+use autd3_driver::{defined::Complex, geometry::Geometry};
 
 /// Plotting backend
 pub trait Backend: Send + Sync {
@@ -20,33 +17,33 @@ pub trait Backend: Send + Sync {
     fn initialize(&mut self) -> Result<(), VisualizerError>;
 
     fn plot_1d(
-        observe_points: Vec<float>,
+        observe_points: Vec<f64>,
         acoustic_pressures: Vec<Complex>,
-        resolution: float,
+        resolution: f64,
         x_label: &str,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError>;
 
     #[allow(clippy::too_many_arguments)]
     fn plot_2d(
-        observe_x: Vec<float>,
-        observe_y: Vec<float>,
+        observe_x: Vec<f64>,
+        observe_y: Vec<f64>,
         acoustic_pressures: Vec<Complex>,
-        resolution: float,
+        resolution: f64,
         x_label: &str,
         y_label: &str,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError>;
 
     fn plot_modulation(
-        modulation: Vec<float>,
+        modulation: Vec<f64>,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError>;
 
     fn plot_phase(
         config: Self::PlotConfig,
         geometry: &Geometry,
-        phases: Vec<float>,
+        phases: Vec<f64>,
     ) -> Result<(), VisualizerError>;
 }
 

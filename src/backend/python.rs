@@ -4,10 +4,7 @@ use pyo3::prelude::*;
 
 use crate::{error::VisualizerError, Backend};
 
-use autd3_driver::{
-    defined::{float, Complex},
-    geometry::Geometry,
-};
+use autd3_driver::{defined::Complex, geometry::Geometry};
 
 #[pyclass]
 #[derive(Clone, Debug, PartialEq)]
@@ -25,7 +22,7 @@ pub struct PyPlotConfig {
     #[pyo3(get)]
     pub fontsize: i32,
     #[pyo3(get)]
-    pub ticks_step: float,
+    pub ticks_step: f64,
     #[pyo3(get)]
     pub cmap: String,
     #[pyo3(get)]
@@ -109,9 +106,9 @@ impl Backend for PythonBackend {
     }
 
     fn plot_1d(
-        observe_points: Vec<float>,
+        observe_points: Vec<f64>,
         acoustic_pressures: Vec<Complex>,
-        resolution: float,
+        resolution: f64,
         x_label: &str,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError> {
@@ -168,10 +165,10 @@ def plot(observe, acoustic_pressures, resolution, x_label, config):
 
     #[allow(clippy::too_many_arguments)]
     fn plot_2d(
-        observe_x: Vec<float>,
-        observe_y: Vec<float>,
+        observe_x: Vec<f64>,
+        observe_y: Vec<f64>,
         acoustic_pressures: Vec<Complex>,
-        resolution: float,
+        resolution: f64,
         x_label: &str,
         y_label: &str,
         config: Self::PlotConfig,
@@ -246,7 +243,7 @@ def plot(observe_x, observe_y, acoustic_pressures, resolution, x_label, y_label,
     }
 
     fn plot_modulation(
-        modulation: Vec<float>,
+        modulation: Vec<f64>,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError> {
         Python::with_gil(|py| -> PyResult<()> {
@@ -285,7 +282,7 @@ def plot(modulation, config):
     fn plot_phase(
         config: Self::PlotConfig,
         geometry: &Geometry,
-        phases: Vec<float>,
+        phases: Vec<f64>,
     ) -> Result<(), VisualizerError> {
         let trans_x = geometry
             .iter()

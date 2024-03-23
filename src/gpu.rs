@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use autd3_driver::{
-    defined::{float, Complex, PI, T4010A1_AMPLITUDE},
+    defined::{Complex, PI, T4010A1_AMPLITUDE},
     geometry::{Geometry, Vector3},
 };
 use vulkano::{
@@ -247,7 +247,7 @@ impl FieldCompute {
                     | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
                 ..Default::default()
             },
-            (0..91).map(|x| D::directivity(x as float) as f32),
+            (0..91).map(|x| D::directivity(x as f64) as f32),
         )?;
         let set_4 = PersistentDescriptorSet::new(
             &self.descriptor_set_allocator,
@@ -319,7 +319,7 @@ impl FieldCompute {
         let data_content = data_buffer.read()?;
         Ok(data_content
             .iter()
-            .map(|d| Complex::new(d[0] as float, d[1] as float))
+            .map(|d| Complex::new(d[0] as f64, d[1] as f64))
             .collect())
     }
 }

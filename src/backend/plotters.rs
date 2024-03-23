@@ -5,16 +5,16 @@ use scarlet::colormap::{ColorMap, ListedColorMap};
 
 use crate::{colormap, error::VisualizerError, Backend};
 
-use autd3_driver::{autd3_device::AUTD3, defined::float, geometry::Geometry};
+use autd3_driver::{autd3_device::AUTD3, geometry::Geometry};
 
 #[derive(Clone, Debug)]
 pub struct PlotConfig {
     pub figsize: (u32, u32),
-    pub cbar_size: float,
+    pub cbar_size: f64,
     pub font_size: u32,
     pub label_area_size: u32,
     pub margin: u32,
-    pub ticks_step: float,
+    pub ticks_step: f64,
     pub cmap: ListedColorMap,
     pub fname: OsString,
 }
@@ -53,7 +53,7 @@ pub struct PlottersBackend {}
 impl PlottersBackend {
     fn plot_modulation_impl<B: plotters::backend::DrawingBackend>(
         root: DrawingArea<B, Shift>,
-        modulation: Vec<float>,
+        modulation: Vec<f64>,
         config: &PlotConfig,
     ) -> Result<(), crate::error::VisualizerError>
     where
@@ -66,7 +66,7 @@ impl PlottersBackend {
             .margin(config.margin)
             .x_label_area_size(config.label_area_size)
             .y_label_area_size(config.label_area_size)
-            .build_cartesian_2d::<_, std::ops::Range<float>>(0..modulation.len(), 0.0..1.0)?;
+            .build_cartesian_2d::<_, std::ops::Range<f64>>(0..modulation.len(), 0.0..1.0)?;
 
         chart
             .configure_mesh()
@@ -90,10 +90,10 @@ impl PlottersBackend {
 
     fn plot_1d_impl<B: plotters::backend::DrawingBackend>(
         root: &DrawingArea<B, Shift>,
-        observe_points: &[float],
+        observe_points: &[f64],
         acoustic_pressures: &[autd3_driver::defined::Complex],
         x_label: &str,
-        yrange: (float, float),
+        yrange: (f64, f64),
         config: &PlotConfig,
     ) -> Result<(), crate::error::VisualizerError>
     where
@@ -104,9 +104,7 @@ impl PlottersBackend {
 
         let xrange = observe_points
             .iter()
-            .fold((float::MAX, float::MIN), |acc, &x| {
-                (acc.0.min(x), acc.1.max(x))
-            });
+            .fold((f64::MAX, f64::MIN), |acc, &x| (acc.0.min(x), acc.1.max(x)));
 
         let x_labels = ((xrange.1 - xrange.0).floor() / config.ticks_step) as usize + 1;
 
@@ -143,13 +141,13 @@ impl PlottersBackend {
     #[allow(clippy::too_many_arguments)]
     fn plot_2d_impl<B: plotters::backend::DrawingBackend>(
         root: &DrawingArea<B, Shift>,
-        observe_points_x: &[float],
-        observe_points_y: &[float],
+        observe_points_x: &[f64],
+        observe_points_y: &[f64],
         acoustic_pressures: &[autd3_driver::defined::Complex],
         x_label: &str,
         y_label: &str,
-        zrange: (float, float),
-        resolution: float,
+        zrange: (f64, f64),
+        resolution: f64,
         config: &PlotConfig,
     ) -> Result<(), crate::error::VisualizerError>
     where
@@ -158,7 +156,7 @@ impl PlottersBackend {
     {
         root.fill(&WHITE)?;
 
-        let main_area_size_x = (config.figsize.0 as float * (1.0 - config.cbar_size)) as u32;
+        let main_area_size_x = (config.figsize.0 as f64 * (1.0 - config.cbar_size)) as u32;
 
         let (main_area, cbar_area) = root.split_horizontally(main_area_size_x);
 
@@ -170,14 +168,10 @@ impl PlottersBackend {
         {
             let xrange = observe_points_x
                 .iter()
-                .fold((float::MAX, float::MIN), |acc, &x| {
-                    (acc.0.min(x), acc.1.max(x))
-                });
+                .fold((f64::MAX, f64::MIN), |acc, &x| (acc.0.min(x), acc.1.max(x)));
             let yrange = observe_points_y
                 .iter()
-                .fold((float::MAX, float::MIN), |acc, &x| {
-                    (acc.0.min(x), acc.1.max(x))
-                });
+                .fold((f64::MAX, f64::MIN), |acc, &x| (acc.0.min(x), acc.1.max(x)));
 
             let plot_range_x = xrange.1 - xrange.0;
             let plot_range_y = yrange.1 - yrange.0;
@@ -188,8 +182,8 @@ impl PlottersBackend {
             let available_size_x = main_area_size_x - config.label_area_size - config.margin;
             let available_size_y = config.figsize.1 - config.label_area_size - config.margin * 2;
 
-            let px_per_ps = (available_size_x as float / plot_range_x)
-                .min(available_size_y as float / plot_range_y);
+            let px_per_ps = (available_size_x as f64 / plot_range_x)
+                .min(available_size_y as f64 / plot_range_y);
 
             let plot_size_x = (plot_range_x * px_per_ps) as u32;
             let plot_size_y = (plot_range_y * px_per_ps) as u32;
@@ -264,7 +258,7 @@ impl PlottersBackend {
                 .y_label_formatter(&|&v| {
                     format!(
                         "{:.2}",
-                        zrange.0 + (zrange.1 - zrange.0) * v as float / color_map_size as float
+                        zrange.0 + (zrange.1 - zrange.0) * v as f64 / color_map_size as f64
                     )
                 })
                 .y_desc("Amplitude [-]")
@@ -292,7 +286,7 @@ impl PlottersBackend {
         root: DrawingArea<B, Shift>,
         config: &PlotConfig,
         geometry: &Geometry,
-        phases: Vec<float>,
+        phases: Vec<f64>,
     ) -> Result<(), crate::error::VisualizerError>
     where
         VisualizerError:
@@ -300,7 +294,7 @@ impl PlottersBackend {
     {
         root.fill(&WHITE)?;
 
-        let main_area_size_x = (config.figsize.0 as float * (1.0 - config.cbar_size)) as u32;
+        let main_area_size_x = (config.figsize.0 as f64 * (1.0 - config.cbar_size)) as u32;
 
         let (main_area, cbar_area) = root.split_horizontally(main_area_size_x);
 
@@ -316,13 +310,13 @@ impl PlottersBackend {
                 .collect::<Vec<_>>();
 
             let min_x =
-                p.iter().fold(float::MAX, |acc, &(x, _)| acc.min(x)) - AUTD3::TRANS_SPACING / 2.0;
+                p.iter().fold(f64::MAX, |acc, &(x, _)| acc.min(x)) - AUTD3::TRANS_SPACING / 2.0;
             let min_y =
-                p.iter().fold(float::MAX, |acc, &(_, y)| acc.min(y)) - AUTD3::TRANS_SPACING / 2.0;
+                p.iter().fold(f64::MAX, |acc, &(_, y)| acc.min(y)) - AUTD3::TRANS_SPACING / 2.0;
             let max_x =
-                p.iter().fold(float::MIN, |acc, &(x, _)| acc.max(x)) + AUTD3::TRANS_SPACING / 2.0;
+                p.iter().fold(f64::MIN, |acc, &(x, _)| acc.max(x)) + AUTD3::TRANS_SPACING / 2.0;
             let max_y =
-                p.iter().fold(float::MIN, |acc, &(_, y)| acc.max(y)) + AUTD3::TRANS_SPACING / 2.0;
+                p.iter().fold(f64::MIN, |acc, &(_, y)| acc.max(y)) + AUTD3::TRANS_SPACING / 2.0;
 
             let plot_range_x = max_x - min_x;
             let plot_range_y = max_y - min_y;
@@ -330,8 +324,8 @@ impl PlottersBackend {
             let available_size_x = main_area_size_x - config.label_area_size - config.margin;
             let available_size_y = config.figsize.1 - config.label_area_size - config.margin * 2;
 
-            let px_per_ps = (available_size_x as float / plot_range_x)
-                .min(available_size_y as float / plot_range_y);
+            let px_per_ps = (available_size_x as f64 / plot_range_x)
+                .min(available_size_y as f64 / plot_range_y);
 
             let plot_size_x = (plot_range_x * px_per_ps) as u32;
             let plot_size_y = (plot_range_y * px_per_ps) as u32;
@@ -371,7 +365,7 @@ impl PlottersBackend {
 
             scatter_ctx.draw_series(p.iter().zip(phases.iter()).map(|(&(x, y), &p)| {
                 let v = (p / (2.0 * autd3_driver::defined::PI)) % 1.;
-                let c = cmap[((v * color_map_size as float) as usize).clamp(0, cmap.len() - 1)];
+                let c = cmap[((v * color_map_size as f64) as usize).clamp(0, cmap.len() - 1)];
                 Circle::new(
                     (x, y),
                     AUTD3::TRANS_SPACING * px_per_ps / 2.0,
@@ -443,9 +437,9 @@ impl Backend for PlottersBackend {
     }
 
     fn plot_1d(
-        observe_points: Vec<float>,
+        observe_points: Vec<f64>,
         acoustic_pressures: Vec<autd3_driver::defined::Complex>,
-        _resolution: float,
+        _resolution: f64,
         x_label: &str,
         config: Self::PlotConfig,
     ) -> Result<(), crate::error::VisualizerError> {
@@ -456,7 +450,7 @@ impl Backend for PlottersBackend {
 
         let yrange = acoustic_pressures
             .iter()
-            .fold((float::MAX, float::MIN), |acc, &x| {
+            .fold((f64::MAX, f64::MIN), |acc, &x| {
                 (acc.0.min(x.norm()), acc.1.max(x.norm()))
             });
 
@@ -482,10 +476,10 @@ impl Backend for PlottersBackend {
     }
 
     fn plot_2d(
-        observe_x: Vec<float>,
-        observe_y: Vec<float>,
+        observe_x: Vec<f64>,
+        observe_y: Vec<f64>,
         acoustic_pressures: Vec<autd3_driver::defined::Complex>,
-        resolution: float,
+        resolution: f64,
         x_label: &str,
         y_label: &str,
         config: Self::PlotConfig,
@@ -497,7 +491,7 @@ impl Backend for PlottersBackend {
 
         let zrange = acoustic_pressures
             .iter()
-            .fold((float::MAX, float::MIN), |acc, &x| {
+            .fold((f64::MAX, f64::MIN), |acc, &x| {
                 (acc.0.min(x.norm()), acc.1.max(x.norm()))
             });
 
@@ -529,7 +523,7 @@ impl Backend for PlottersBackend {
     }
 
     fn plot_modulation(
-        modulation: Vec<float>,
+        modulation: Vec<f64>,
         config: Self::PlotConfig,
     ) -> Result<(), crate::error::VisualizerError> {
         let path = std::path::Path::new(&config.fname);
@@ -555,7 +549,7 @@ impl Backend for PlottersBackend {
     fn plot_phase(
         config: Self::PlotConfig,
         geometry: &autd3_driver::geometry::Geometry,
-        phases: Vec<float>,
+        phases: Vec<f64>,
     ) -> Result<(), crate::error::VisualizerError> {
         let path = std::path::Path::new(&config.fname);
         if !path.parent().map_or(true, |p| p.exists()) {
