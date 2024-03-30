@@ -118,7 +118,7 @@ impl Backend for PythonBackend {
             .collect::<Vec<_>>();
 
         Python::with_gil(|py| -> PyResult<()> {
-            let fun = PyModule::from_code(
+            let fun = PyModule::from_code_bound(
                 py,
                 r#"
 import matplotlib.pyplot as plt
@@ -179,7 +179,7 @@ def plot(observe, acoustic_pressures, resolution, x_label, config):
             .collect::<Vec<_>>();
 
         Python::with_gil(|py| -> PyResult<()> {
-            let fun = PyModule::from_code(
+            let fun = PyModule::from_code_bound(
                 py,
                 r#"
 import matplotlib.pyplot as plt
@@ -247,7 +247,7 @@ def plot(observe_x, observe_y, acoustic_pressures, resolution, x_label, y_label,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError> {
         Python::with_gil(|py| -> PyResult<()> {
-            let fun = PyModule::from_code(
+            let fun = PyModule::from_code_bound(
                 py,
                 r#"
 import matplotlib.pyplot as plt
@@ -294,7 +294,7 @@ def plot(modulation, config):
             .collect::<Vec<_>>();
 
         Python::with_gil(|py| -> PyResult<()> {
-            let fun = PyModule::from_code(
+            let fun = PyModule::from_code_bound(
                 py,
 r#"
 import matplotlib.pyplot as plt
