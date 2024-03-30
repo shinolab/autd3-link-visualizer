@@ -8,10 +8,6 @@ inputs:
     description: 'use shaderc'
     required: false
     default: false
-  toolchain:
-    description: 'rust toolchain'
-    required: false
-    default: 'stable'
 runs:
   using: "composite"
   steps:  
@@ -24,7 +20,7 @@ runs:
     - name: Setup Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        toolchain: ${{ inputs.toolchain }}
+        toolchain: stable
 
     - name: install shaderc
       shell: pwsh
