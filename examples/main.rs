@@ -17,15 +17,18 @@ async fn main() -> Result<()> {
     #[cfg(not(feature = "python"))]
     let link = Visualizer::plotters();
 
+    #[cfg(feature = "gpu")]
+    let link = link.with_gpu(-1);
+
     let mut autd = Controller::builder()
         .add_device(AUTD3::new(Vector3::zeros()))
         .open(link)
         .await?;
 
-    let center = autd.geometry.center() + Vector3::new(0., 0., 150.0 * MILLIMETER);
+    let center = autd.geometry.center() + Vector3::new(0., 0., 150.0 * mm);
 
     let g = Focus::new(center);
-    let m = Square::new(150.);
+    let m = Square::new(150. * Hz);
 
     autd.send((m, g)).await?;
 

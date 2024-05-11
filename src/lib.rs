@@ -17,10 +17,12 @@ use autd3_driver::{
         directivity::{Directivity, Sphere},
         propagate,
     },
-    common::{EmitIntensity, Phase, Segment},
-    cpu::{RxMessage, TxDatagram},
-    defined::Complex,
+    defined::{Complex, PI},
     error::AUTDInternalError,
+    firmware::{
+        cpu::{RxMessage, TxDatagram},
+        fpga::{EmitIntensity, Phase, Segment},
+    },
     geometry::{Geometry, Vector3},
     link::{Link, LinkBuilder},
 };
@@ -312,7 +314,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     }
 
     /// Get raw modulation data
-    pub fn modulation(&self, segment: Segment) -> Vec<EmitIntensity> {
+    pub fn modulation(&self, segment: Segment) -> Vec<u8> {
         self.cpus[0]
             .fpga()
             .modulation(segment)
@@ -344,15 +346,17 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .enumerate()
                     .flat_map(|(i, cpu)| {
                         let dev = &geometry[i];
-                        let sound_speed = dev.sound_speed;
+                        let wavenumber = dev.wavenumber() as f32;
                         cpu.fpga()
                             .drives(segment, idx)
                             .iter()
-                            .zip(dev.iter().map(|t| t.wavenumber(sound_speed)))
-                            .map(|(d, w)| {
-                                let amp = d.intensity().value() as f32 / 255.0;
+                            .map(|d| {
+                                let amp = (std::f32::consts::PI
+                                    * cpu.fpga().to_pulse_width(d.intensity(), 0xFF) as f32
+                                    / 512.0)
+                                    .sin();
                                 let phase = d.phase().radian() as f32;
-                                [amp, phase, 0., w as f32]
+                                [amp, phase, 0., wavenumber]
                             })
                             .collect::<Vec<_>>()
                     })
@@ -367,14 +371,17 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .iter()
                     .enumerate()
                     .fold(Complex::new(0., 0.), |acc, (i, cpu)| {
-                        let sound_speed = geometry[i].sound_speed;
+                        let wavenumber = geometry[i].wavenumber();
                         let drives = cpu.fpga().drives(segment, idx);
                         acc + geometry[i].iter().zip(drives.iter()).fold(
                             Complex::new(0., 0.),
                             |acc, (t, d)| {
-                                let amp = d.intensity().value() as f64 / 255.0;
+                                let amp = (PI
+                                    * cpu.fpga().to_pulse_width(d.intensity(), 0xFF) as f64
+                                    / 512.0)
+                                    .sin();
                                 let phase = d.phase().radian();
-                                acc + propagate::<D>(t, 0.0, sound_speed, target)
+                                acc + propagate::<D>(t, 0.0, wavenumber, target)
                                     * Complex::from_polar(amp, phase)
                             },
                         )
@@ -469,7 +476,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
         let m = self
             .modulation(segment)
             .iter()
-            .map(|v| v.value() as f64 / 255.0)
+            .map(|&v| v as f64 / 255.0)
             .collect::<Vec<_>>();
         B::plot_modulation(m, config)?;
         Ok(())
@@ -506,7 +513,7 @@ impl<D: Directivity, B: Backend> Link for Visualizer<D, B> {
 
         self.cpus.iter_mut().for_each(|cpu| {
             cpu.update();
-            rx[cpu.idx()] = RxMessage::new(cpu.ack(), cpu.rx_data());
+            rx[cpu.idx()] = cpu.rx();
         });
 
         Ok(true)
