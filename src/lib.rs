@@ -352,7 +352,8 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             .iter()
                             .map(|d| {
                                 let amp = (std::f32::consts::PI
-                                    * cpu.fpga().to_pulse_width(d.intensity(), 0xFF) as f32
+                                    * cpu.fpga().to_pulse_width(d.intensity(), EmitIntensity::MAX)
+                                        as f32
                                     / 512.0)
                                     .sin();
                                 let phase = d.phase().radian() as f32;
