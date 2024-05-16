@@ -314,7 +314,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     }
 
     /// Get raw modulation data
-    pub fn modulation(&self, segment: Segment) -> Vec<u8> {
+    pub fn modulation(&self, segment: Segment) -> Vec<EmitIntensity> {
         self.cpus[0]
             .fpga()
             .modulation(segment)
@@ -377,7 +377,8 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             Complex::new(0., 0.),
                             |acc, (t, d)| {
                                 let amp = (PI
-                                    * cpu.fpga().to_pulse_width(d.intensity(), 0xFF) as f64
+                                    * cpu.fpga().to_pulse_width(d.intensity(), EmitIntensity::MAX)
+                                        as f64
                                     / 512.0)
                                     .sin();
                                 let phase = d.phase().radian();
@@ -476,7 +477,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
         let m = self
             .modulation(segment)
             .iter()
-            .map(|&v| v as f64 / 255.0)
+            .map(|&v| v.value() as f64 / 255.0)
             .collect::<Vec<_>>();
         B::plot_modulation(m, config)?;
         Ok(())
