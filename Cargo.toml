@@ -1,6 +1,6 @@
 [package]
 name = "autd3-link-visualizer"
-version = "24.0.0"
+version = "25.0.0-rc.1"
 authors = ["shun suzuki <suzuki@hapis.k.u-tokyo.ac.jp>"]
 edition = "2021"
 
@@ -11,8 +11,8 @@ readme = "README.md"
 keywords = ["autd"]
 
 [dependencies]
-autd3-firmware-emulator = { version = "24.0.0" }
-autd3-driver = { version = "24.0.0" }
+autd3-firmware-emulator = { version = "25.0.0-rc.1" }
+autd3-driver = { version = "25.0.0-rc.1" }
 thiserror = "1.0.30"
 pyo3 = { version = "0.21.0", features = ["abi3", "auto-initialize"], optional = true }
 which = { version = "6.0.0", optional = true }
@@ -26,8 +26,8 @@ num-complex = "0.4.3"
 
 [dev-dependencies]
 anyhow = "1.0.75"
-autd3 = { version = "24.0.0" }
-autd3-gain-holo = { version = "24.0.0" }
+autd3 = { version = "25.0.0-rc.1" }
+autd3-gain-holo = { version = "25.0.0-rc.1" }
 tokio = { version = "1.34.0", features = ["macros", "rt-multi-thread"] }
 
 [features]

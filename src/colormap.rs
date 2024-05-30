@@ -1,6 +1,5 @@
 use scarlet::colormap::ListedColorMap;
 
-/// Colormap of jet in matplotlib
 pub fn jet() -> ListedColorMap {
     ListedColorMap::new(
         [

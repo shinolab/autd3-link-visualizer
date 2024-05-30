@@ -47,7 +47,7 @@ impl PartialEq for PlotConfig {
     }
 }
 
-/// Backend using [plotters](https://github.com/plotters-rs/plotters)
+
 pub struct PlottersBackend {}
 
 impl PlottersBackend {

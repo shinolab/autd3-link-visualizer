@@ -1,6 +1,6 @@
 use crate::Backend;
 
-/// Backend with no plotting
+
 pub struct NullBackend {}
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]

@@ -48,7 +48,7 @@ impl Default for PyPlotConfig {
     }
 }
 
-/// Backend using Python and matplotlib
+
 pub struct PythonBackend {}
 
 impl PythonBackend {

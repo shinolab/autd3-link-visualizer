@@ -20,8 +20,7 @@ async fn main() -> Result<()> {
     #[cfg(feature = "gpu")]
     let link = link.with_gpu(-1);
 
-    let mut autd = Controller::builder()
-        .add_device(AUTD3::new(Vector3::zeros()))
+    let mut autd = Controller::builder([AUTD3::new(Vector3::zeros())])
         .open(link)
         .await?;
 

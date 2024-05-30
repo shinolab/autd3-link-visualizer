@@ -33,7 +33,6 @@ pub use scarlet::colormap::ListedColorMap;
 
 use error::VisualizerError;
 
-/// Link to monitoring the status of AUTD and acoustic field
 pub struct Visualizer<D, B>
 where
     D: Directivity,
@@ -206,7 +205,6 @@ impl Visualizer<Sphere, PlottersBackend> {
 
 #[cfg(feature = "plotters")]
 impl Visualizer<Sphere, PlottersBackend> {
-    /// Constructor with Plotters backend
     pub fn plotters() -> VisualizerBuilder<Sphere, PlottersBackend> {
         Self::builder()
     }
@@ -214,7 +212,6 @@ impl Visualizer<Sphere, PlottersBackend> {
 
 #[cfg(feature = "python")]
 impl Visualizer<Sphere, PythonBackend> {
-    /// Constructor with Python backend
     pub fn python() -> VisualizerBuilder<Sphere, PythonBackend> {
         VisualizerBuilder {
             backend: PythonBackend::new(),
@@ -227,7 +224,6 @@ impl Visualizer<Sphere, PythonBackend> {
 }
 
 impl Visualizer<Sphere, NullBackend> {
-    /// Constructor with Null backend
     pub fn null() -> VisualizerBuilder<Sphere, NullBackend> {
         VisualizerBuilder {
             backend: NullBackend::new(),
@@ -240,7 +236,6 @@ impl Visualizer<Sphere, NullBackend> {
 }
 
 impl<D: Directivity, B: Backend> VisualizerBuilder<D, B> {
-    /// Set directivity
     pub fn with_directivity<U: Directivity>(self) -> VisualizerBuilder<U, B> {
         VisualizerBuilder {
             backend: self.backend,
@@ -251,7 +246,6 @@ impl<D: Directivity, B: Backend> VisualizerBuilder<D, B> {
         }
     }
 
-    /// Set backend
     pub fn with_backend<U: Backend>(self) -> VisualizerBuilder<D, U> {
         VisualizerBuilder {
             backend: U::new(),
@@ -265,7 +259,6 @@ impl<D: Directivity, B: Backend> VisualizerBuilder<D, B> {
 
 #[cfg(feature = "gpu")]
 impl<D: Directivity, B: Backend> VisualizerBuilder<D, B> {
-    /// Enable GPU acceleration
     pub fn with_gpu(self, gpu_idx: i32) -> VisualizerBuilder<D, B> {
         Self {
             gpu_idx: Some(gpu_idx),
@@ -275,12 +268,6 @@ impl<D: Directivity, B: Backend> VisualizerBuilder<D, B> {
 }
 
 impl<D: Directivity, B: Backend> Visualizer<D, B> {
-    /// Get phases of transducers
-    ///
-    /// # Arguments
-    ///
-    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
-    ///
     pub fn phases(&self, segment: Segment, idx: usize) -> Vec<Phase> {
         self.cpus
             .iter()
@@ -294,12 +281,6 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
             .collect()
     }
 
-    /// Get intensities of transducers
-    ///
-    /// # Arguments
-    ///
-    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
-    ///
     pub fn intensities(&self, segment: Segment, idx: usize) -> Vec<EmitIntensity> {
         self.cpus
             .iter()
@@ -313,8 +294,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
             .collect()
     }
 
-    /// Get raw modulation data
-    pub fn modulation(&self, segment: Segment) -> Vec<EmitIntensity> {
+    pub fn modulation(&self, segment: Segment) -> Vec<u8> {
         self.cpus[0]
             .fpga()
             .modulation(segment)
@@ -322,14 +302,6 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
             .collect()
     }
 
-    /// Calculate acoustic field at specified points
-    ///
-    /// # Arguments
-    ///
-    /// * `observe_points` - Observe points iterator
-    /// * `geometry` - Geometry
-    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
-    ///
     pub fn calc_field<'a, I: IntoIterator<Item = &'a Vector3>>(
         &self,
         observe_points: I,
@@ -352,8 +324,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             .iter()
                             .map(|d| {
                                 let amp = (std::f32::consts::PI
-                                    * cpu.fpga().to_pulse_width(d.intensity(), EmitIntensity::MAX)
-                                        as f32
+                                    * cpu.fpga().to_pulse_width(d.intensity(), u8::MAX) as f32
                                     / 512.0)
                                     .sin();
                                 let phase = d.phase().radian() as f32;
@@ -372,18 +343,18 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .iter()
                     .enumerate()
                     .fold(Complex::new(0., 0.), |acc, (i, cpu)| {
+                        let dir = geometry[i].axial_direction();
                         let wavenumber = geometry[i].wavenumber();
                         let drives = cpu.fpga().drives(segment, idx);
                         acc + geometry[i].iter().zip(drives.iter()).fold(
                             Complex::new(0., 0.),
                             |acc, (t, d)| {
                                 let amp = (PI
-                                    * cpu.fpga().to_pulse_width(d.intensity(), EmitIntensity::MAX)
-                                        as f64
+                                    * cpu.fpga().to_pulse_width(d.intensity(), u8::MAX) as f64
                                     / 512.0)
                                     .sin();
                                 let phase = d.phase().radian();
-                                acc + propagate::<D>(t, 0.0, wavenumber, target)
+                                acc + propagate::<D>(t, 0.0, wavenumber, dir, target)
                                     * Complex::from_polar(amp, phase)
                             },
                         )
@@ -392,15 +363,6 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
             .collect())
     }
 
-    /// Plot acoustic field
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - Plot configuration
-    /// * `range` - Plot range
-    /// * `geometry` - Geometry
-    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
-    ///
     pub fn plot_field(
         &self,
         config: B::PlotConfig,
@@ -446,14 +408,6 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
         }
     }
 
-    /// Plot transducers with phases
-    ///
-    /// # Arguments
-    ///
-    /// * `config` - Plot configuration
-    /// * `geometry` - Geometry
-    /// * `idx` - Index of STM. If you use Gain, this value should be 0.
-    ///
     pub fn plot_phase(
         &self,
         config: B::PlotConfig,
@@ -469,7 +423,6 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
         B::plot_phase(config, geometry, phases)
     }
 
-    /// Plot modulation data
     pub fn plot_modulation(
         &self,
         config: B::PlotConfig,
@@ -478,7 +431,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
         let m = self
             .modulation(segment)
             .iter()
-            .map(|&v| v.value() as f64 / 255.0)
+            .map(|&v| v as f64 / 255.0)
             .collect::<Vec<_>>();
         B::plot_modulation(m, config)?;
         Ok(())

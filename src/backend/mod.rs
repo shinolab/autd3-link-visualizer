@@ -8,7 +8,7 @@ use crate::error::VisualizerError;
 
 use autd3_driver::{defined::Complex, geometry::Geometry};
 
-/// Plotting backend
+
 pub trait Backend: Send + Sync {
     type PlotConfig;
 

@@ -270,14 +270,10 @@ impl FieldCompute {
             geometry
                 .iter()
                 .flat_map(|dev| {
-                    dev.iter().map(|t| {
-                        [
-                            t.z_direction().x as f32,
-                            t.z_direction().y as f32,
-                            t.z_direction().z as f32,
-                            0.,
-                        ]
-                    })
+                    let x = dev.axial_direction().x as f32;
+                    let y = dev.axial_direction().y as f32;
+                    let z = dev.axial_direction().z as f32;
+                    vec![[x, y, z, 0.]; dev.num_transducers()]
                 })
                 .collect::<Vec<_>>(),
         )?;
