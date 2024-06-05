@@ -176,14 +176,8 @@ impl FieldCompute {
             geometry
                 .iter()
                 .flat_map(|dev| {
-                    dev.iter().map(|t| {
-                        [
-                            t.position().x as f32,
-                            t.position().y as f32,
-                            t.position().z as f32,
-                            0.,
-                        ]
-                    })
+                    dev.iter()
+                        .map(|t| [t.position().x, t.position().y, t.position().z, 0.])
                 })
                 .collect::<Vec<_>>(),
         )?;
@@ -225,9 +219,7 @@ impl FieldCompute {
                     | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
                 ..Default::default()
             },
-            observe_points
-                .iter()
-                .map(|p| [p.x as f32, p.y as f32, p.z as f32, 0.]),
+            observe_points.iter().map(|p| [p.x, p.y, p.z, 0.]),
         )?;
         let set_3 = PersistentDescriptorSet::new(
             &self.descriptor_set_allocator,
@@ -247,7 +239,7 @@ impl FieldCompute {
                     | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
                 ..Default::default()
             },
-            (0..91).map(|x| D::directivity(x as f64) as f32),
+            (0..91).map(|x| D::directivity(x as f32)),
         )?;
         let set_4 = PersistentDescriptorSet::new(
             &self.descriptor_set_allocator,
@@ -270,9 +262,9 @@ impl FieldCompute {
             geometry
                 .iter()
                 .flat_map(|dev| {
-                    let x = dev.axial_direction().x as f32;
-                    let y = dev.axial_direction().y as f32;
-                    let z = dev.axial_direction().z as f32;
+                    let x = dev.axial_direction().x;
+                    let y = dev.axial_direction().y;
+                    let z = dev.axial_direction().z;
                     vec![[x, y, z, 0.]; dev.num_transducers()]
                 })
                 .collect::<Vec<_>>(),
@@ -293,7 +285,7 @@ impl FieldCompute {
         let pc = cs::PushConsts {
             observe_num: size as u32,
             source_num: geometry.num_transducers() as u32,
-            trans_amp: (T4010A1_AMPLITUDE / (4. * PI)) as f32,
+            trans_amp: (T4010A1_AMPLITUDE / (4. * PI)),
             _dummy2: 0,
         };
 
@@ -315,7 +307,7 @@ impl FieldCompute {
         let data_content = data_buffer.read()?;
         Ok(data_content
             .iter()
-            .map(|d| Complex::new(d[0] as f64, d[1] as f64))
+            .map(|d| Complex::new(d[0], d[1]))
             .collect())
     }
 }

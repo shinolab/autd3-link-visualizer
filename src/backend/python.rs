@@ -22,7 +22,7 @@ pub struct PyPlotConfig {
     #[pyo3(get)]
     pub fontsize: i32,
     #[pyo3(get)]
-    pub ticks_step: f64,
+    pub ticks_step: f32,
     #[pyo3(get)]
     pub cmap: String,
     #[pyo3(get)]
@@ -47,7 +47,6 @@ impl Default for PyPlotConfig {
         }
     }
 }
-
 
 pub struct PythonBackend {}
 
@@ -106,9 +105,9 @@ impl Backend for PythonBackend {
     }
 
     fn plot_1d(
-        observe_points: Vec<f64>,
+        observe_points: Vec<f32>,
         acoustic_pressures: Vec<Complex>,
-        resolution: f64,
+        resolution: f32,
         x_label: &str,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError> {
@@ -165,10 +164,10 @@ def plot(observe, acoustic_pressures, resolution, x_label, config):
 
     #[allow(clippy::too_many_arguments)]
     fn plot_2d(
-        observe_x: Vec<f64>,
-        observe_y: Vec<f64>,
+        observe_x: Vec<f32>,
+        observe_y: Vec<f32>,
         acoustic_pressures: Vec<Complex>,
-        resolution: f64,
+        resolution: f32,
         x_label: &str,
         y_label: &str,
         config: Self::PlotConfig,
@@ -243,7 +242,7 @@ def plot(observe_x, observe_y, acoustic_pressures, resolution, x_label, y_label,
     }
 
     fn plot_modulation(
-        modulation: Vec<f64>,
+        modulation: Vec<f32>,
         config: Self::PlotConfig,
     ) -> Result<(), VisualizerError> {
         Python::with_gil(|py| -> PyResult<()> {
@@ -282,7 +281,7 @@ def plot(modulation, config):
     fn plot_phase(
         config: Self::PlotConfig,
         geometry: &Geometry,
-        phases: Vec<f64>,
+        phases: Vec<f32>,
     ) -> Result<(), VisualizerError> {
         let trans_x = geometry
             .iter()

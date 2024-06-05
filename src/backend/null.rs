@@ -1,6 +1,5 @@
 use crate::Backend;
 
-
 pub struct NullBackend {}
 
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
@@ -18,9 +17,9 @@ impl Backend for NullBackend {
     }
 
     fn plot_1d(
-        _observe_points: Vec<f64>,
+        _observe_points: Vec<f32>,
         _acoustic_pressures: Vec<autd3_driver::defined::Complex>,
-        _resolution: f64,
+        _resolution: f32,
         _x_label: &str,
         _config: Self::PlotConfig,
     ) -> Result<(), crate::error::VisualizerError> {
@@ -28,10 +27,10 @@ impl Backend for NullBackend {
     }
 
     fn plot_2d(
-        _observe_x: Vec<f64>,
-        _observe_y: Vec<f64>,
+        _observe_x: Vec<f32>,
+        _observe_y: Vec<f32>,
         _acoustic_pressures: Vec<autd3_driver::defined::Complex>,
-        _resolution: f64,
+        _resolution: f32,
         _x_label: &str,
         _y_label: &str,
         _config: Self::PlotConfig,
@@ -40,7 +39,7 @@ impl Backend for NullBackend {
     }
 
     fn plot_modulation(
-        _modulation: Vec<f64>,
+        _modulation: Vec<f32>,
         _config: Self::PlotConfig,
     ) -> Result<(), crate::error::VisualizerError> {
         Err(crate::error::VisualizerError::NotSupported)
@@ -49,7 +48,7 @@ impl Backend for NullBackend {
     fn plot_phase(
         _config: Self::PlotConfig,
         _geometry: &autd3_driver::geometry::Geometry,
-        _phases: Vec<f64>,
+        _phases: Vec<f32>,
     ) -> Result<(), crate::error::VisualizerError> {
         Err(crate::error::VisualizerError::NotSupported)
     }
