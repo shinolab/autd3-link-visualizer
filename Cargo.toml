@@ -1,6 +1,6 @@
 [package]
 name = "autd3-link-visualizer"
-version = "27.0.0-alpha.0"
+version = "27.0.0-alpha.1"
 authors = ["shun suzuki <suzuki@hapis.k.u-tokyo.ac.jp>"]
 edition = "2021"
 

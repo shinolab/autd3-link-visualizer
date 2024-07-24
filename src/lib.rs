@@ -500,13 +500,9 @@ impl<D: Directivity, B: Backend> Link for Visualizer<D, B> {
         Ok(true)
     }
 
-    fn update(
-        &mut self,
-        geometry: &Geometry,
-    ) -> impl std::future::Future<Output = Result<(), AUTDInternalError>> {
+    async fn update(&mut self, geometry: &Geometry) -> Result<(), AUTDInternalError> {
         self.geometry = clone_geometry(geometry);
-
-        async { Ok(()) }
+        Ok(())
     }
 
     fn is_open(&self) -> bool {
