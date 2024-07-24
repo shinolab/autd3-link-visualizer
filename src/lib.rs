@@ -17,7 +17,7 @@ use autd3_driver::{
         directivity::{Directivity, Sphere},
         propagate,
     },
-    defined::Complex,
+    defined::{Complex, ULTRASOUND_PERIOD_COUNT},
     error::AUTDInternalError,
     firmware::{
         cpu::{RxMessage, TxDatagram},
@@ -341,7 +341,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             .map(|d| {
                                 let amp = (std::f32::consts::PI
                                     * cpu.fpga().to_pulse_width(d.intensity(), u8::MAX) as f32
-                                    / 256.0)
+                                    / ULTRASOUND_PERIOD_COUNT as f32)
                                     .sin();
                                 let phase = d.phase().radian();
                                 [amp, phase, 0., wavenumber]
@@ -362,7 +362,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .map(|d| {
                         let amp = (std::f32::consts::PI
                             * cpu.fpga().to_pulse_width(d.intensity(), u8::MAX) as f32
-                            / 256.0)
+                            / ULTRASOUND_PERIOD_COUNT as f32)
                             .sin();
                         let phase = d.phase().radian();
                         [amp, phase]
