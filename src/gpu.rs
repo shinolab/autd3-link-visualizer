@@ -239,7 +239,7 @@ impl FieldCompute {
                     | MemoryTypeFilter::HOST_SEQUENTIAL_WRITE,
                 ..Default::default()
             },
-            (0..91).map(|x| D::directivity(x as f32)),
+            (0..91).map(|x| D::directivity(x as f32 * autd3_driver::defined::deg)),
         )?;
         let set_4 = PersistentDescriptorSet::new(
             &self.descriptor_set_allocator,

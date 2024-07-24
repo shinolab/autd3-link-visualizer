@@ -38,6 +38,7 @@ where
     D: Directivity,
     B: Backend,
 {
+    geometry: Geometry,
     is_open: bool,
     timeout: Duration,
     cpus: Vec<CPUEmulator>,
@@ -57,6 +58,21 @@ where
     _d: PhantomData<D>,
     #[cfg(feature = "gpu")]
     gpu_idx: Option<i32>,
+}
+
+fn clone_geometry(geometry: &Geometry) -> Geometry {
+    Geometry::new(
+        geometry
+            .iter()
+            .map(|d| {
+                autd3_driver::geometry::Device::new(
+                    d.idx(),
+                    *d.rotation(),
+                    d.iter().cloned().collect(),
+                )
+            })
+            .collect(),
+    )
 }
 
 #[cfg_attr(feature = "async-trait", autd3_driver::async_trait)]
@@ -81,6 +97,7 @@ impl<D: Directivity, B: Backend> LinkBuilder for VisualizerBuilder<D, B> {
         backend.initialize()?;
 
         Ok(Self::L {
+            geometry: clone_geometry(geometry),
             is_open: true,
             timeout,
             cpus: geometry
@@ -305,7 +322,6 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     pub fn calc_field<'a, I: IntoIterator<Item = &'a Vector3>>(
         &self,
         observe_points: I,
-        geometry: &Geometry,
         segment: Segment,
         idx: usize,
     ) -> Result<Vec<Complex>, VisualizerError> {
@@ -317,7 +333,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .iter()
                     .enumerate()
                     .flat_map(|(i, cpu)| {
-                        let dev = &geometry[i];
+                        let dev = &self.geometry[i];
                         let wavenumber = dev.wavenumber();
                         cpu.fpga()
                             .drives(segment, idx)
@@ -325,7 +341,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             .map(|d| {
                                 let amp = (std::f32::consts::PI
                                     * cpu.fpga().to_pulse_width(d.intensity(), u8::MAX) as f32
-                                    / 512.0)
+                                    / 256.0)
                                     .sin();
                                 let phase = d.phase().radian();
                                 [amp, phase, 0., wavenumber]
@@ -333,7 +349,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                             .collect::<Vec<_>>()
                     })
                     .collect::<Vec<_>>();
-                return gpu.calc_field_of::<D, I>(observe_points, geometry, source_drive);
+                return gpu.calc_field_of::<D, I>(observe_points, &self.geometry, source_drive);
             }
         }
         let source_drive = self
@@ -346,7 +362,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .map(|d| {
                         let amp = (std::f32::consts::PI
                             * cpu.fpga().to_pulse_width(d.intensity(), u8::MAX) as f32
-                            / 512.0)
+                            / 256.0)
                             .sin();
                         let phase = d.phase().radian();
                         [amp, phase]
@@ -361,15 +377,15 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
                     .iter()
                     .enumerate()
                     .fold(Complex::new(0., 0.), |acc, (i, cpu)| {
-                        let dir = geometry[i].axial_direction();
-                        let wavenumber = geometry[i].wavenumber();
-                        acc + geometry[i].iter().zip(source_drive[cpu.idx()].iter()).fold(
-                            Complex::new(0., 0.),
-                            |acc, (t, &[amp, phase])| {
+                        let dir = self.geometry[i].axial_direction();
+                        let wavenumber = self.geometry[i].wavenumber();
+                        acc + self.geometry[i]
+                            .iter()
+                            .zip(source_drive[cpu.idx()].iter())
+                            .fold(Complex::new(0., 0.), |acc, (t, &[amp, phase])| {
                                 acc + propagate::<D>(t, wavenumber, dir, target)
                                     * Complex::from_polar(amp, phase)
-                            },
-                        )
+                            })
                     })
             })
             .collect())
@@ -379,12 +395,11 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
         &self,
         config: B::PlotConfig,
         range: PlotRange,
-        geometry: &Geometry,
         segment: Segment,
         idx: usize,
     ) -> Result<(), VisualizerError> {
         let observe_points = range.observe_points();
-        let acoustic_pressures = self.calc_field(&observe_points, geometry, segment, idx)?;
+        let acoustic_pressures = self.calc_field(&observe_points, segment, idx)?;
         if range.is_1d() {
             let (observe, label) = match (range.nx(), range.ny(), range.nz()) {
                 (_, 1, 1) => (range.observe_x(), "x [mm]"),
@@ -423,7 +438,6 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
     pub fn plot_phase(
         &self,
         config: B::PlotConfig,
-        geometry: &Geometry,
         segment: Segment,
         idx: usize,
     ) -> Result<(), VisualizerError> {
@@ -432,7 +446,7 @@ impl<D: Directivity, B: Backend> Visualizer<D, B> {
             .iter()
             .map(Phase::radian)
             .collect();
-        B::plot_phase(config, geometry, phases)
+        B::plot_phase(config, &self.geometry, phases)
     }
 
     pub fn plot_modulation(
@@ -484,6 +498,15 @@ impl<D: Directivity, B: Backend> Link for Visualizer<D, B> {
         });
 
         Ok(true)
+    }
+
+    fn update(
+        &mut self,
+        geometry: &Geometry,
+    ) -> impl std::future::Future<Output = Result<(), AUTDInternalError>> {
+        self.geometry = clone_geometry(geometry);
+
+        async { Ok(()) }
     }
 
     fn is_open(&self) -> bool {

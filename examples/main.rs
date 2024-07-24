@@ -24,23 +24,22 @@ async fn main() -> Result<()> {
         .open(link)
         .await?;
 
-    let center = autd.geometry.center() + Vector3::new(0., 0., 150.0 * mm);
+    let center = autd.geometry().center() + Vector3::new(0., 0., 150.0 * mm);
 
     let g = Focus::new(center);
     let m = Square::new(150. * Hz);
 
     autd.send((m, g)).await?;
 
-    autd.link.plot_phase(
+    autd.link().plot_phase(
         Config {
             fname: Path::new("phase.png").into(),
             ..Config::default()
         },
-        &autd.geometry,
         Segment::S0,
         0,
     )?;
-    autd.link.plot_field(
+    autd.link().plot_field(
         Config {
             fname: Path::new("x.png").into(),
             ..Config::default()
@@ -51,11 +50,10 @@ async fn main() -> Result<()> {
             z_range: center.z..center.z,
             resolution: 1.,
         },
-        &autd.geometry,
         Segment::S0,
         0,
     )?;
-    autd.link.plot_field(
+    autd.link().plot_field(
         Config {
             fname: Path::new("xy.png").into(),
             ..Config::default()
@@ -66,11 +64,10 @@ async fn main() -> Result<()> {
             z_range: center.z..center.z,
             resolution: 1.,
         },
-        &autd.geometry,
         Segment::S0,
         0,
     )?;
-    autd.link.plot_field(
+    autd.link().plot_field(
         Config {
             fname: Path::new("yz.png").into(),
             ..Config::default()
@@ -81,11 +78,10 @@ async fn main() -> Result<()> {
             z_range: 0.0..center.z + 50.0,
             resolution: 2.,
         },
-        &autd.geometry,
         Segment::S0,
         0,
     )?;
-    autd.link.plot_field(
+    autd.link().plot_field(
         Config {
             fname: Path::new("zx.png").into(),
             ticks_step: 20.,
@@ -97,12 +93,11 @@ async fn main() -> Result<()> {
             z_range: 0.0..center.z + 50.0,
             resolution: 2.,
         },
-        &autd.geometry,
         Segment::S0,
         0,
     )?;
 
-    autd.link.plot_modulation(
+    autd.link().plot_modulation(
         Config {
             fname: Path::new("mod.png").into(),
             ..Config::default()
@@ -111,9 +106,7 @@ async fn main() -> Result<()> {
     )?;
 
     // Calculate acoustic pressure without plotting
-    let p = autd
-        .link
-        .calc_field(&[center], &autd.geometry, Segment::S0, 0)?;
+    let p = autd.link().calc_field(&[center], Segment::S0, 0)?;
     println!(
         "Acoustic pressure at ({}, {}, {}) = {} [Pa]",
         center.x, center.y, center.z, p[0]
