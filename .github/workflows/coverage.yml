@@ -1,57 +1,23 @@
 name: Coverage
 
 on:
-  push:
-    branches:
-      - 'develop'
+  merge_group:
+    types: [ checks_requested ]
 
 jobs:
-  check-src:
-    runs-on: ubuntu-latest
-    name: check if src files changed
-    outputs:
-      status: ${{ steps.changed-files.outputs.modified_files }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: tj-actions/changed-files@v42
-        id: changed-files
-        with:
-          files: |
-            .github/workflows/coverage.yml
-            .github/actions/setup-build/action.yml
-            .github/workflows/build.yml
-            ./**/*.comp
-            ./**/*.rs
-            ./*.toml
-
   coverage:
-    needs: check-src
-    if: needs.check-src.outputs.status
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup
-        if: needs.check-src.outputs.status
-        uses: ./.github/actions/setup-build
+      - uses: ./.github/actions/setup-build
         with:
           os: ubuntu-latest
           shaderc: false
-
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-
-      - name: Rust cache
-        if: needs.check-src.outputs.status
-        uses: swatinem/rust-cache@v2
-
-      - name: Generate code coverage
-        run: |
-          cargo llvm-cov --lib --features "python plotters" --lcov --output-path lcov.info
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - run: cargo llvm-cov --lib --features "python plotters" --lcov --output-path lcov.info
+      - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
