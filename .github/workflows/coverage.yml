@@ -4,6 +4,7 @@ on:
   merge_group:
     branches: [ "main" ]
 
+jobs:
   coverage:
     runs-on: ubuntu-latest
     env:
