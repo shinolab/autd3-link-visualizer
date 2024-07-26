@@ -39,11 +39,14 @@ runs:
       shell: bash
       if: inputs.os == 'macos-latest'
       run: |
-        brew install git cmake ninja
-      
+        brew install ninja
+
     - name: install dependencies
       shell: bash
       if: inputs.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y pkg-config libfreetype6-dev libfontconfig1-dev
+
+    - name: setup cache
+      uses: swatinem/rust-cache@v2
