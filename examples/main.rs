@@ -109,7 +109,10 @@ async fn main() -> Result<()> {
     let p = autd.link().calc_field(&[center], Segment::S0, 0)?;
     println!(
         "Acoustic pressure at ({}, {}, {}) = {} [Pa]",
-        center.x, center.y, center.z, p[0]
+        center.x,
+        center.y,
+        center.z,
+        p[0].norm()
     );
 
     autd.close().await?;
