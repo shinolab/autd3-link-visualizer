@@ -54,7 +54,7 @@ void main() {
         if(idx >= pc.source_num) break; 
         vec3 tp = vec3(source_pos.pos[idx]); 
         float r = length(point - tp); 
-        float p = source_drive.drive[idx].y - source_drive.drive[idx].w * r;
+        float p = -source_drive.drive[idx].y - source_drive.drive[idx].w * r;
 
         vec3 dir = vec3(source_dir.dir[idx]);
         vec3 diff = point - tp;
